@@ -8,10 +8,19 @@ const GameControls: React.FC = () => {
   const [selectedRow, setSelectedRow] = useState(0);
   const [linesToRemove, setLinesToRemove] = useState(1);
   
+  // Find the first non-empty row when the current row becomes empty
+  useEffect(() => {
+    const firstNonEmptyRow = state.rows.findIndex(count => count > 0);
+    if (firstNonEmptyRow !== -1 && state.rows[selectedRow] === 0) {
+      setSelectedRow(firstNonEmptyRow);
+    }
+  }, [state.rows, selectedRow]);
+  
   // Reset lines to remove when selected row changes or when there's a game reset
   useEffect(() => {
-    setLinesToRemove(1);
-  }, [selectedRow, state.gameOver]);
+    const maxLines = state.rows[selectedRow] || 1;
+    setLinesToRemove(Math.min(linesToRemove, maxLines));
+  }, [selectedRow, state.gameOver, state.rows]);
   
   const maxLinesToRemove = state.rows[selectedRow] || 0;
   
@@ -31,7 +40,14 @@ const GameControls: React.FC = () => {
     removeLines(linesToRemove, selectedRow);
   };
   
-  const isDisabled = state.currentPlayer !== 'human' || state.gameOver || maxLinesToRemove === 0;
+  const isDisabled = state.currentPlayer !== 'human' || state.gameOver;
+  
+  // Only show controls if there are still lines to remove
+  const hasAvailableRows = state.rows.some(count => count > 0);
+  
+  if (!hasAvailableRows && !state.gameOver) {
+    return null;
+  }
   
   return (
     <div className="mt-6">
@@ -46,10 +62,12 @@ const GameControls: React.FC = () => {
                   onClick={() => setSelectedRow(index)}
                   disabled={isDisabled || count === 0}
                   className={`flex-1 py-2 px-3 rounded-md transition-colors ${
-                    selectedRow === index
+                    selectedRow === index && count > 0
                       ? 'bg-purple-600 text-white'
-                      : 'bg-purple-800 bg-opacity-30 hover:bg-purple-700'
-                  } ${count === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      : count > 0
+                      ? 'bg-purple-800 bg-opacity-30 hover:bg-purple-700'
+                      : 'bg-gray-800 bg-opacity-20 cursor-not-allowed'
+                  }`}
                 >
                   Row {index + 1}
                 </button>
@@ -82,7 +100,7 @@ const GameControls: React.FC = () => {
         <div className="flex gap-2">
           <motion.button
             onClick={handleRemoveLines}
-            disabled={isDisabled}
+            disabled={isDisabled || maxLinesToRemove === 0}
             className="flex-1 bg-teal-600 hover:bg-teal-500 disabled:hover:bg-teal-600 disabled:opacity-50 text-white font-medium py-2 px-4 rounded-md transition-colors"
             whileTap={{ scale: 0.95 }}
           >
