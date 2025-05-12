@@ -11,55 +11,38 @@ export const isWinningPosition = (rows: number[]): boolean => {
 };
 
 // Get the optimal move for the AI
-export const getOptimalMove = (rows: number[], activeRowIndex: number): number => {
-  const activeRowSize = rows[activeRowIndex];
+export const getOptimalMove = (rows: number[]): { rowIndex: number; count: number } => {
+  const nimSum = calculateNimSum(rows);
   
-  // If this is the last row with elements and it has only 1, AI must take it and lose
-  if (
-    activeRowSize === 1 &&
-    rows.slice(activeRowIndex + 1).every(row => row === 0) &&
-    rows.slice(0, activeRowIndex).every(row => row === 0)
-  ) {
-    return 1;
-  }
-
-  // If there's only one heap with items left, take all but 1 to force opponent to take last
-  if (
-    rows.filter(row => row > 0).length === 1 &&
-    activeRowSize > 1
-  ) {
-    return activeRowSize - 1;
-  }
-
-  // Copy the rows for calculation
-  const newRows = [...rows];
-  const nimSum = calculateNimSum(newRows);
-
-  // If we're already in a winning position (nim sum is 0)
-  // Just take 1 item to minimize risk
+  // If nimSum is 0, we're in a losing position
+  // Take 1 from the first non-empty row
   if (nimSum === 0) {
-    return 1;
+    const rowIndex = rows.findIndex(row => row > 0);
+    return { rowIndex, count: 1 };
   }
-
-  // Try to find a move that makes nim sum 0
-  for (let take = 1; take <= activeRowSize; take++) {
-    newRows[activeRowIndex] = activeRowSize - take;
-    if (calculateNimSum(newRows) === 0) {
-      return take;
+  
+  // Try to find a winning move
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i] === 0) continue;
+    
+    for (let take = 1; take <= rows[i]; take++) {
+      const newRows = [...rows];
+      newRows[i] -= take;
+      if (calculateNimSum(newRows) === 0) {
+        return { rowIndex: i, count: take };
+      }
     }
-    // Reset for next iteration
-    newRows[activeRowIndex] = activeRowSize;
   }
-
-  // If no winning move, just take 1
-  return 1;
+  
+  // If no winning move found, take 1 from the first non-empty row
+  const rowIndex = rows.findIndex(row => row > 0);
+  return { rowIndex, count: 1 };
 };
 
 // Initialize a new game state
 export const initializeGame = (): GameState => {
   return {
     rows: [3, 5, 7],
-    activeRowIndex: 0,
     currentPlayer: Math.random() < 0.5 ? 'human' : 'ai',
     gameOver: false,
     winner: null,
@@ -69,11 +52,11 @@ export const initializeGame = (): GameState => {
 };
 
 // Check if the move is valid
-export const isValidMove = (state: GameState, count: number): boolean => {
-  const { rows, activeRowIndex } = state;
+export const isValidMove = (state: GameState, count: number, rowIndex: number): boolean => {
+  const { rows } = state;
   
-  // Can't remove more lines than available in active row
-  if (count <= 0 || count > rows[activeRowIndex]) {
+  // Can't remove from empty row or remove more lines than available
+  if (rowIndex < 0 || rowIndex >= rows.length || count <= 0 || count > rows[rowIndex]) {
     return false;
   }
   
@@ -81,21 +64,12 @@ export const isValidMove = (state: GameState, count: number): boolean => {
 };
 
 // Make a move and update the game state
-export const makeMove = (state: GameState, count: number, player: Player): GameState => {
-  const { rows, activeRowIndex } = state;
+export const makeMove = (state: GameState, count: number, rowIndex: number, player: Player): GameState => {
+  const { rows } = state;
   
   // Update the rows
   const newRows = [...rows];
-  newRows[activeRowIndex] -= count;
-  
-  // Check if active row is now empty
-  let newActiveRowIndex = activeRowIndex;
-  if (newRows[activeRowIndex] === 0) {
-    // Move to next non-empty row
-    while (newActiveRowIndex < newRows.length - 1 && newRows[newActiveRowIndex] === 0) {
-      newActiveRowIndex++;
-    }
-  }
+  newRows[rowIndex] -= count;
   
   // Check if the game is over
   const isGameOver = newRows.every(row => row === 0);
@@ -104,14 +78,10 @@ export const makeMove = (state: GameState, count: number, player: Player): GameS
   const winner = isGameOver ? (player === 'human' ? 'ai' : 'human') : null;
   
   // Create the move message
-  const moveMessage = `${player === 'human' ? 'You' : 'AI'} removed ${count} line${count > 1 ? 's' : ''} from Row ${activeRowIndex + 1}`;
+  const moveMessage = `${player === 'human' ? 'You' : 'AI'} removed ${count} line${count > 1 ? 's' : ''} from Row ${rowIndex + 1}`;
   
   // Create the game status message
   let message = moveMessage;
-  
-  if (newRows[activeRowIndex] === 0 && !isGameOver) {
-    message = `${message}. Row ${activeRowIndex + 1} is now empty.`;
-  }
   
   if (isGameOver) {
     message = `${message}. Game over! ${winner === 'human' ? 'You win!' : 'AI wins!'}`;
@@ -120,7 +90,6 @@ export const makeMove = (state: GameState, count: number, player: Player): GameS
   return {
     ...state,
     rows: newRows,
-    activeRowIndex: newActiveRowIndex,
     currentPlayer: player === 'human' ? 'ai' : 'human',
     gameOver: isGameOver,
     winner,
