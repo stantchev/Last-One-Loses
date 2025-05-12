@@ -4,7 +4,7 @@ import { initializeGame, makeMove, getOptimalMove, isValidMove } from '../utils/
 
 interface GameContextType {
   state: GameState;
-  removeLines: (count: number) => void;
+  removeLines: (count: number, rowIndex: number) => void;
   resetGame: () => void;
 }
 
@@ -13,27 +13,27 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 const gameReducer = (state: GameState, action: GameAction): GameState => {
   switch (action.type) {
     case 'REMOVE_LINES': {
-      const { count } = action.payload;
+      const { count, rowIndex } = action.payload;
       
       // Validate the move
-      if (!isValidMove(state, count)) {
+      if (!isValidMove(state, count, rowIndex)) {
         return {
           ...state,
-          message: `Invalid move! You can remove 1 to ${state.rows[state.activeRowIndex]} lines.`,
+          message: `Invalid move! You can remove 1 to ${state.rows[rowIndex]} lines from Row ${rowIndex + 1}.`,
         };
       }
       
       // Process the human move
-      return makeMove(state, count, 'human');
+      return makeMove(state, count, rowIndex, 'human');
     }
     case 'AI_MOVE': {
       if (state.gameOver) return state;
       
       // Get the optimal move for AI
-      const count = getOptimalMove(state.rows, state.activeRowIndex);
+      const { rowIndex, count } = getOptimalMove(state.rows);
       
       // Process the AI move
-      return makeMove(state, count, 'ai');
+      return makeMove(state, count, rowIndex, 'ai');
     }
     case 'RESET_GAME':
       return initializeGame();
@@ -56,9 +56,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [state.currentPlayer, state.gameOver]);
   
-  const removeLines = (count: number) => {
+  const removeLines = (count: number, rowIndex: number) => {
     if (state.currentPlayer === 'human' && !state.gameOver) {
-      dispatch({ type: 'REMOVE_LINES', payload: { count } });
+      dispatch({ type: 'REMOVE_LINES', payload: { count, rowIndex } });
     }
   };
   
