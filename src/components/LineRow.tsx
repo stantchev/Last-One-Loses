@@ -28,16 +28,12 @@ const LineRow: React.FC<LineRowProps> = ({
       }`}
       animate={{
         scale: isActive ? 1.02 : 1,
+        opacity: isCompleted ? 0.5 : 1,
       }}
       transition={{ duration: 0.2 }}
     >
       <div className="flex items-center mb-2">
         <div className="text-sm font-semibold text-gray-300 mr-2">Row {rowIndex + 1}:</div>
-        {isActive && (
-          <div className="text-xs bg-teal-400 text-teal-900 px-2 py-0.5 rounded-full font-medium">
-            Active
-          </div>
-        )}
         {isCompleted && (
           <div className="text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full font-medium">
             Completed
