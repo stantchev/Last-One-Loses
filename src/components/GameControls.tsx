@@ -5,14 +5,15 @@ import { motion } from 'framer-motion';
 
 const GameControls: React.FC = () => {
   const { state, removeLines, resetGame } = useGame();
+  const [selectedRow, setSelectedRow] = useState(0);
   const [linesToRemove, setLinesToRemove] = useState(1);
   
-  // Reset lines to remove when active row changes or when there's a game reset
+  // Reset lines to remove when selected row changes or when there's a game reset
   useEffect(() => {
     setLinesToRemove(1);
-  }, [state.activeRowIndex, state.gameOver]);
+  }, [selectedRow, state.gameOver]);
   
-  const maxLinesToRemove = state.rows[state.activeRowIndex] || 0;
+  const maxLinesToRemove = state.rows[selectedRow] || 0;
   
   const handleIncrement = () => {
     if (linesToRemove < maxLinesToRemove) {
@@ -27,7 +28,7 @@ const GameControls: React.FC = () => {
   };
   
   const handleRemoveLines = () => {
-    removeLines(linesToRemove);
+    removeLines(linesToRemove, selectedRow);
   };
   
   const isDisabled = state.currentPlayer !== 'human' || state.gameOver || maxLinesToRemove === 0;
@@ -36,6 +37,26 @@ const GameControls: React.FC = () => {
     <div className="mt-6">
       <div className="flex flex-col md:flex-row gap-4">
         <div className={`flex-1 ${isDisabled ? 'opacity-50' : ''}`}>
+          <div className="mb-4">
+            <p className="text-sm text-gray-300 mb-2">Select row:</p>
+            <div className="flex gap-2">
+              {state.rows.map((count, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedRow(index)}
+                  disabled={isDisabled || count === 0}
+                  className={`flex-1 py-2 px-3 rounded-md transition-colors ${
+                    selectedRow === index
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-purple-800 bg-opacity-30 hover:bg-purple-700'
+                  } ${count === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  Row {index + 1}
+                </button>
+              ))}
+            </div>
+          </div>
+          
           <p className="text-sm text-gray-300 mb-2">Lines to remove:</p>
           <div className="flex items-center">
             <button
