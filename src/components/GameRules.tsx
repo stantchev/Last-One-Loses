@@ -38,10 +38,8 @@ export const GameRules: React.FC = () => {
             <h3 className="font-medium text-yellow-400">Rules:</h3>
             <ul className="list-disc list-inside ml-2 text-sm text-gray-200">
               <li>Players alternate turns</li>
-              <li>On your turn, remove 1 or more lines</li>
-              <li>You can only remove lines from the active row</li>
-              <li>Start with Row 1, then proceed to Row 2, then Row 3</li>
-              <li>Cannot move to lower rows until upper rows are empty</li>
+              <li>On your turn, remove any number of lines from any single row</li>
+              <li>You cannot remove lines from multiple rows in a single turn</li>
               <li>The player forced to remove the final line LOSES</li>
             </ul>
           </div>
