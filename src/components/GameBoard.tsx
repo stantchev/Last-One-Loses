@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useGame } from '../context/GameContext';
 import GameStatus from './GameStatus';
 import LineRow from './LineRow';
@@ -6,7 +6,7 @@ import GameControls from './GameControls';
 import { Sparkles } from 'lucide-react';
 
 const GameBoard: React.FC = () => {
-  const { state, removeLines, resetGame } = useGame();
+  const { state, resetGame } = useGame();
   
   return (
     <div className="w-full">
@@ -19,7 +19,7 @@ const GameBoard: React.FC = () => {
               key={rowIndex}
               rowIndex={rowIndex}
               lineCount={lineCount}
-              isActive={rowIndex === state.activeRowIndex && !state.gameOver}
+              isActive={!state.gameOver && lineCount > 0}
               isCompleted={lineCount === 0}
             />
           ))}
